@@ -30,10 +30,9 @@ venom
 
 function start(client) {
   client.onMessage((message) => {
-      console.log(message)
     message.body = _.toLower(message.body);
     if (message.body.slice(0, 1) === ".") {
-        // console.log(message)
+        console.log(message);
       let commands = message.body.slice(1).split(" ");
       pre = commands[0];
       attr = commands[1];
@@ -73,7 +72,7 @@ function sendText(client, recvMsg, sentMsg) {
 }
 
 function sendHelp() {
-  return "*.help*: Sends this message.\n\r*.truth*: Sends a truth question. Use _.truth r_ for R rated question.\n\r*.dare*: Sends a dare. Use _.dare r_ for R rated dare.\n\r*.nhie*: Sends a Never have i ever questoin.Use _.nhie r_ for R rated NHIE.";
+  return "*.help*: Sends this message.\n*.truth*: Sends a truth question. Use _.truth r_ for R rated question.\n*.dare*: Sends a dare. Use _.dare r_ for R rated dare.\n*.nhie*: Sends a Never have i ever questoin.Use _.nhie r_ for R rated NHIE.";
 }
 
 function randomTruth(isR) {
