@@ -18,8 +18,7 @@ let daresR = rDareFile.split("\n");
 let nhie = nhieFile.split("\n");
 let nhieR = rNhieFile.split("\n");
 
-
-mongoose.connect('mongodb://localhost:27017/whatsappBot', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect("mongodb://localhost:27017/whatsappBot", { useNewUrlParser: true, useUnifiedTopology: true });
 
 venom
   .create()
@@ -32,38 +31,46 @@ function start(client) {
   client.onMessage((message) => {
     message.body = _.toLower(message.body);
     if (message.body.slice(0, 1) === ".") {
-        console.log(message);
+      console.log(message);
       let commands = message.body.slice(1).split(" ");
       pre = commands[0];
       attr = commands[1];
       switch (pre) {
         case "truth":
-          sendReply(client, message, randomTruth(attr));
+          if (message.isGroup) {
+            sendReply(client, message, randomTruth(attr));
+          } else {
+            sendText(client, message, randomTruth(attr));
+          }
+
           break;
         case "dare":
-          sendReply(client, message, randomDare(attr));
+          if (message.isGroup) {
+            sendReply(client, message, randomDare(attr));
+          } else {
+            sendText(client, message, randomDare(attr));
+          }
           break;
         case "nhie":
+          if (message.isGroup) {
             sendReply(client, message, randomNhie(attr));
-            break;
-        case "help": sendReply(client, message, sendHelp());
-        break;
-            
+          } else {
+            sendText(client, message, randomNhie(attr));
+          }
+          break;
+        case "help":
+          sendText(client, message, sendHelp());
+          break;
       }
     }
   });
 }
 
 function sendReply(client, recvMsg, sentMsg) {
-     client.reply(
-        recvMsg.from,
-        sentMsg,
-        recvMsg.id
-      ).catch((erro) => {
-          console.error('Error when sending: ', erro); //return object error
-      });
-  }
-
+  client.reply(recvMsg.from, sentMsg, recvMsg.id).catch((erro) => {
+    console.error("Error when sending: ", erro); //return object error
+  });
+}
 
 function sendText(client, recvMsg, sentMsg) {
   client.sendText(recvMsg.from, sentMsg).catch((erro) => {
@@ -91,13 +98,10 @@ function randomDare(isR) {
   }
 }
 
-
 function randomNhie(isR) {
-
-    if (isR === "r") {
-        return "Never have I ever " + nhieR[Math.floor(Math.random() * nhieR.length)];
-    } 
-    else {
-      return "Never have I ever " + nhie[Math.floor(Math.random() * nhie.length)];
-    }
+  if (isR === "r") {
+    return "Never have I ever " + nhieR[Math.floor(Math.random() * nhieR.length)];
+  } else {
+    return "Never have I ever " + nhie[Math.floor(Math.random() * nhie.length)];
   }
+}
