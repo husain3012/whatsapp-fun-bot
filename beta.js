@@ -19,7 +19,6 @@ let dares = dareFile.split("\n");
 let daresR = rDareFile.split("\n");
 let nhie = nhieFile.split("\n");
 let nhieR = rNhieFile.split("\n");
-
 mongoose.connect("mongodb://localhost:27017/whatsappBot", { useNewUrlParser: true, useUnifiedTopology: true });
 const userSchema = new mongoose.Schema({
   noID: String,
@@ -87,10 +86,15 @@ function start(client) {
         case "gimme":
           sendReddit(client, message, attr, query);
           break;
+        case "scramble":
+          scrambleGame(client, message, false);
+          break;
         case "help":
           sendHelp(client, message);
           break;
-        default: customResponse(client, message, pre);
+        default:
+          customResponse(client, message, pre);
+          scrambleGame(client, message, pre);
       }
     }
   });
@@ -223,7 +227,7 @@ function sendGifAsSticker(client, recvMsg, attr) {
 }
 
 function sendImage(client, recvMsg, sentMsg, caption) {
-  console.log("sendding image")
+  console.log("sendding image");
   if (caption === undefined) {
     caption = "";
   }
@@ -237,15 +241,15 @@ function sendImage(client, recvMsg, sentMsg, caption) {
     });
 }
 
-function sendImageAsSticker(client, recvcMsg, img){
+function sendImageAsSticker(client, recvcMsg, img) {
   client
-  .sendImageAsSticker(recvcMsg.from, img)
-  .then((result) => {
-    console.log('Result: ', result); //return object success
-  })
-  .catch((erro) => {
-    console.error('Error when sending: ', erro); //return object error
-  });
+    .sendImageAsSticker(recvcMsg.from, img)
+    .then((result) => {
+      console.log("Result: ", result); //return object success
+    })
+    .catch((erro) => {
+      console.error("Error when sending: ", erro); //return object error
+    });
 }
 
 function imgurSearch(client, recvMsg, query) {
@@ -261,7 +265,7 @@ function imgurSearch(client, recvMsg, query) {
   axios(config).then(function (response) {
     let rand = Math.floor((Math.random() * response.data.data.length) / 3);
     let img = response.data.data[rand].images[0].link;
-    console.log(img)
+    console.log(img);
     if (img.slice(-3) === "mp4") {
       imgurSearch(client, recvMsg, query);
     } else {
@@ -350,26 +354,28 @@ function sendReddit(client, recvMsg, attr, query) {
   }
 }
 
+function scrambleGame(client, message, answer) {
+  let original_word = "animal";
+  let scrambled_word;
 
-function scrambleGame(client, message, answer){
-  let original_word = "animal"
-let scrambled_word = original_word.shuffle();
-sendText(client, message.from, scrambled_word)
-if(message.hasOwnProperty("quotedParticipant")){
-  if(message.quotedParticipent ==='917017919847@c.us'){
-    if(message.quotedMsg.body===scrambled_word && answer === original_word){
-      sendReply("Good Work")
+  if (!answer) {
+    scrambled_word = original_word.shuffle();
+    sendText(client, message.from, scrambled_word);
+  } else {
+    if (message.hasOwnProperty("quotedParticipant")) {
+      if (message.quotedParticipent === "917017919847@c.us") {
+        if (message.quotedMsg.body === scrambled_word && answer === original_word) {
+          sendReply("Good Work");
+        }
+      }
     }
   }
 }
-}
 
-
-
-function customResponse(client, recvMsg, pre){
- if(pre === "khushi" && !recvMsg.isGroupMsg){
-  sendImageAsSticker(client, recvMsg, __dirname + "/data/images/chutiya.png");
- }
+function customResponse(client, recvMsg, pre) {
+  if (pre === "khushi" && !recvMsg.isGroupMsg) {
+    sendImageAsSticker(client, recvMsg, __dirname + "/data/images/chutiya.png");
+  }
 }
 
 function sendHelp(client, user) {
@@ -388,20 +394,15 @@ function sendHelp(client, user) {
   });
 }
 
-
-
-
-
-
 String.prototype.shuffle = function () {
   var a = this.split(""),
-      n = a.length;
+    n = a.length;
 
-  for(var i = n - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = a[i];
-      a[i] = a[j];
-      a[j] = tmp;
+  for (var i = n - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
   }
   return a.join("");
-}
+};

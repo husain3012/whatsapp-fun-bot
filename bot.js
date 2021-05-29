@@ -12,7 +12,6 @@ const dareFile = fs.readFileSync(__dirname + "/data/dares.txt").toString("utf-8"
 const rDareFile = fs.readFileSync(__dirname + "/data/dares-r.txt").toString("utf-8");
 const nhieFile = fs.readFileSync(__dirname + "/data/nhie.txt").toString("utf-8");
 const rNhieFile = fs.readFileSync(__dirname + "/data/nhie-r.txt").toString("utf-8");
-const words6File = fs.readFileSync(__dirname + "/data/words6.txt").toString("utf-8");
 
 let truths = truthFile.split("\n");
 let truthsR = rTruthFile.split("\n");
@@ -20,8 +19,6 @@ let dares = dareFile.split("\n");
 let daresR = rDareFile.split("\n");
 let nhie = nhieFile.split("\n");
 let nhieR = rNhieFile.split("\n");
-let words6 = words6File.split("\n");
-
 mongoose.connect("mongodb://localhost:27017/whatsappBot", { useNewUrlParser: true, useUnifiedTopology: true });
 const userSchema = new mongoose.Schema({
   noID: String,
@@ -89,10 +86,15 @@ function start(client) {
         case "gimme":
           sendReddit(client, message, attr, query);
           break;
+        case "scramble":
+          // scrambleGame(client, message, false);
+          break;
         case "help":
           sendHelp(client, message);
           break;
-        default: customResponse(client, message, pre);
+        default:
+          customResponse(client, message, pre);
+          // scrambleGame(client, message, pre);
       }
     }
   });
@@ -225,7 +227,7 @@ function sendGifAsSticker(client, recvMsg, attr) {
 }
 
 function sendImage(client, recvMsg, sentMsg, caption) {
-  console.log("sendding image")
+  console.log("sendding image");
   if (caption === undefined) {
     caption = "";
   }
@@ -239,15 +241,15 @@ function sendImage(client, recvMsg, sentMsg, caption) {
     });
 }
 
-function sendImageAsSticker(client, recvcMsg, img){
+function sendImageAsSticker(client, recvcMsg, img) {
   client
-  .sendImageAsSticker(recvcMsg.from, img)
-  .then((result) => {
-    console.log('Result: ', result); //return object success
-  })
-  .catch((erro) => {
-    console.error('Error when sending: ', erro); //return object error
-  });
+    .sendImageAsSticker(recvcMsg.from, img)
+    .then((result) => {
+      console.log("Result: ", result); //return object success
+    })
+    .catch((erro) => {
+      console.error("Error when sending: ", erro); //return object error
+    });
 }
 
 function imgurSearch(client, recvMsg, query) {
@@ -263,7 +265,7 @@ function imgurSearch(client, recvMsg, query) {
   axios(config).then(function (response) {
     let rand = Math.floor((Math.random() * response.data.data.length) / 3);
     let img = response.data.data[rand].images[0].link;
-    console.log(img)
+    console.log(img);
     if (img.slice(-3) === "mp4") {
       imgurSearch(client, recvMsg, query);
     } else {
@@ -352,33 +354,37 @@ function sendReddit(client, recvMsg, attr, query) {
   }
 }
 
+function scrambleGame(client, message, answer) {
+  let original_word = "animal";
 
-function scrambleGame(client, message){
-  let original_word = "animal"
-let scrambled_word = "liaman";
-sendText(client, message.from, scrambled_word)
-if(message.hasOwnProperty("quotedParticipant")){
-  if(message.quotedParticipent ==='917017919847@c.us'){
-    if(message.quotedMsg.body===scrambled_word && _.toLower(message.body.slice(1)) === original_word){
-      
+  if (!answer) {
+    let scrambled_word = original_word.shuffle();
+    sendText(client, message, scrambled_word);
+  } else {
+    if (message.hasOwnProperty("quotedParticipant")) {
+      console.log("checkongscramble answer")
+      if (message.quotedParticipent === "917017919847@c.us") {
+        if (message.quotedMsg.body === scrambled_word && answer === original_word) {
+          sendReply(client, message, "Good Work");
+        } else {
+          sendReply(client, message, "Try again");
+        }
+      }
     }
   }
 }
-}
 
-
-
-function customResponse(client, recvMsg, pre){
- if(pre === "khushi" && !recvMsg.isGroupMsg){
-  sendImageAsSticker(client, recvMsg, __dirname + "/data/images/chutiya.png");
- }
+function customResponse(client, recvMsg, pre) {
+  if (pre === "khushi" && !recvMsg.isGroupMsg) {
+    sendImageAsSticker(client, recvMsg, __dirname + "/data/images/chutiya.png");
+  }
 }
 
 function sendHelp(client, user) {
   let help =
-    "*.help*: Sends this message.\n\n*.truth*: Sends a truth question.\n\n*.dare*: Sends a dare.\n\n*.nhie*: Sends a Never have i ever questoin.\n\n*.roast <name>*: Roasts entered user.\n\n*.meme*: Sends a fresh meme from r/memes.\n\n*.gimme <search>*: Sends a relatable image from a matching subreddit. Example: .gimme PuppySmiles\n\n*.sticker <search>*: Sends a relatble sticker. Example: .sticker ?Thank You";
+    "*.help*: Sends this message.\n\n*.truth*: Sends a truth question.\n\n*.dare*: Sends a dare.\n\n*.nhie*: Sends a Never have i ever questoin.\n\n*.roast <name>*: Roasts entered user.\n\n*.meme*: Sends a fresh meme from r/memes.\n\n*.gimme <search>*: Sends a relatable image from a matching subreddit. Example: .gimme PuppySmiles\n\n*.sticker <search>*: Sends a relatble sticker. Example: .sticker Thank You";
   let helpAdult =
-    "*.help*: Sends this message.\n\n*.truth*: Sends a truth question. Use _.truth r_ for adult questions.\n\n*.dare*: Sends a dare. Use _.dare r_ for adult dares.\n\n*.nhie*: Sends a Never have i ever questoin. Use _.nhie r_ for adult questions.\n\n*.roast <name>*: Roasts entered user.\n\n*.meme*: Sends a fresh meme from r/memes. Use _.meme r_ for adult memes.\n\n*.gimme <search>*: Sends a relatable image from a matching subreddit. Example: .gimme PuppySmiles\n*.sticker ?<search>*: Sends a relatble sticker. Example: .sticker ?Thank You";
+    "*.help*: Sends this message.\n\n*.truth*: Sends a truth question. Use _.truth r_ for adult questions.\n\n*.dare*: Sends a dare. Use _.dare r_ for adult dares.\n\n*.nhie*: Sends a Never have i ever questoin. Use _.nhie r_ for adult questions.\n\n*.roast <name>*: Roasts entered user.\n\n*.meme*: Sends a fresh meme from r/memes. Use _.meme r_ for adult memes.\n\n*.gimme <search>*: Sends a relatable image from a matching subreddit. Example: .gimme PuppySmiles\n\n*.sticker <search>*: Sends a relatble sticker. Example: .sticker Thank You\n\n*.horny <search>*: Supports NSFW images. Example: _.horny butt_";
   User.findOne({ noID: user.sender.id }, function (err, foundUser) {
     if (foundUser) {
       if (foundUser.adult && !user.isGroupMsg) {
@@ -389,3 +395,16 @@ function sendHelp(client, user) {
     }
   });
 }
+
+String.prototype.shuffle = function () {
+  var a = this.split(""),
+    n = a.length;
+
+  for (var i = n - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
+  }
+  return a.join("");
+};
