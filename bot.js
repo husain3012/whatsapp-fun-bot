@@ -91,7 +91,7 @@ function start(client) {
           sendHorny(client, message, attr);
           break;
         case "gimme":
-          sendReddit(client, message, attr, query);
+          sendReddit(client, message, query);
           break;
         case "scramble":
           // scrambleGame(client, message, false);
@@ -365,10 +365,9 @@ function sendHorny(client, recvMsg, attr) {
 }
 
 function sendReddit(client, recvMsg, query) {
-  query = _.camelCase(query);
 
   axios
-    .get("https://meme-api.herokuapp.com/gimme/" + query)
+    .get("https://meme-api.herokuapp.com/gimme/" + _.camelCase(query))
     .then((response) => {
       if (response.status === 200) {
         console.log(response.status + "page loaded");
