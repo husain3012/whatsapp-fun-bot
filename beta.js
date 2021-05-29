@@ -12,7 +12,6 @@ const dareFile = fs.readFileSync(__dirname + "/data/dares.txt").toString("utf-8"
 const rDareFile = fs.readFileSync(__dirname + "/data/dares-r.txt").toString("utf-8");
 const nhieFile = fs.readFileSync(__dirname + "/data/nhie.txt").toString("utf-8");
 const rNhieFile = fs.readFileSync(__dirname + "/data/nhie-r.txt").toString("utf-8");
-const words6File = fs.readFileSync(__dirname + "/data/words6.txt").toString("utf-8");
 
 let truths = truthFile.split("\n");
 let truthsR = rTruthFile.split("\n");
@@ -20,7 +19,6 @@ let dares = dareFile.split("\n");
 let daresR = rDareFile.split("\n");
 let nhie = nhieFile.split("\n");
 let nhieR = rNhieFile.split("\n");
-let words6 = words6File.split("\n");
 
 mongoose.connect("mongodb://localhost:27017/whatsappBot", { useNewUrlParser: true, useUnifiedTopology: true });
 const userSchema = new mongoose.Schema({
@@ -353,14 +351,14 @@ function sendReddit(client, recvMsg, attr, query) {
 }
 
 
-function scrambleGame(client, message){
+function scrambleGame(client, message, answer){
   let original_word = "animal"
-let scrambled_word = "liaman";
+let scrambled_word = original_word.shuffle();
 sendText(client, message.from, scrambled_word)
 if(message.hasOwnProperty("quotedParticipant")){
   if(message.quotedParticipent ==='917017919847@c.us'){
-    if(message.quotedMsg.body===scrambled_word && _.toLower(message.body.slice(1)) === original_word){
-      
+    if(message.quotedMsg.body===scrambled_word && answer === original_word){
+      sendReply("Good Work")
     }
   }
 }
@@ -388,4 +386,22 @@ function sendHelp(client, user) {
       }
     }
   });
+}
+
+
+
+
+
+
+String.prototype.shuffle = function () {
+  var a = this.split(""),
+      n = a.length;
+
+  for(var i = n - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
+  }
+  return a.join("");
 }
