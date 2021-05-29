@@ -47,6 +47,8 @@ function start(client) {
     }
 
     if (message.body.slice(0, 1) === preprocessor) {
+      console.log(message);
+      // console.log(recvMsg.chat.name)
       let commands = message.body.slice(1).split(" ");
 
       pre = commands[0];
@@ -203,8 +205,8 @@ function sendInsult(client, message, attr) {
 }
 
 function sendFile(client, message, file, caption) {
-  if(caption===undefined){
-    caption=""
+  if (caption === undefined) {
+    caption = "";
   }
   client
     .sendFile(message.from, file, "file_name", caption)
@@ -288,34 +290,25 @@ function sendGiphy(client, message, query) {
     });
 }
 
-function imgurSearch(client, recvMsg, query) {
-  console.log("Fetching from imgur");
-  const config = {
-    method: "get",
-    url: "https://api.imgur.com/3/gallery/search/{{sort:top}}/{{window}}/{{page}}?q_type=jpg&q=" + query,
-    headers: {
-      Authorization: process.env.IMGRTOKEN,
-    },
-  };
-
-  axios(config).then(function (response) {
-    let rand = Math.floor((Math.random() * response.data.data.length) / 3);
-    let img = response.data.data[rand].images[0].link;
-    console.log(img);
-    if (img.slice(-3) === "mp4") {
-      imgurSearch(client, recvMsg, query);
-    } else {
-      sendImage(client, recvMsg, img);
-    }
-  });
-}
-
 function sendRedditMeme(client, recvMsg, attr) {
+  console.log("reqeust meme");
   if (attr === "r") {
     sendHorny(client, recvMsg, "NSFWFunny");
   } else {
-    console.log("Searching for meme");
-    axios.get("https://meme-api.herokuapp.com/gimme/memes").then((response) => {
+    let memeSource = ["memes", "funny"];
+    if (recvMsg.isGroupMsg) {
+      console.log("checking group");
+      let group_name = _.toLower(recvMsg.chat.name);
+      let group_desc = _.toLower(recvMsg.chat.groupMetadata.desc);
+      if (group_desc.includes("game") || group_name.includes("game")) {
+        memeSource = ["gamingmemes", "gaming"];
+      } else if (group_desc.includes("code") || group_name.includes("cse") || group_name.includes("coding")) {
+        memeSource = ["ProgrammerHumor"];
+      }
+    }
+    let meme =  memeSource[Math.floor(Math.random()*memeSource.length)];
+    console.log("Searching for meme " + meme );
+    axios.get("https://meme-api.herokuapp.com/gimme/" + meme).then((response) => {
       if (response.status === 200) {
         let json = response.data;
         console.log("meme found");
@@ -342,9 +335,9 @@ function makeUserAdult(client, user, attr) {
 }
 
 function sendHorny(client, recvMsg, attr) {
-  nsfwSubreddits=["gooned","gonewild","boobs","cumsluts", "blowjob", "nsfwhardcore"]
-  if(attr===undefined){
-    attr = nsfwSubreddits[Math.floor(Math.random()*nsfwSubreddits.length)]
+  nsfwSubreddits = ["gooned", "gonewild", "boobs", "cumsluts", "blowjob", "nsfwhardcore"];
+  if (attr === undefined) {
+    attr = nsfwSubreddits[Math.floor(Math.random() * nsfwSubreddits.length)];
   }
   User.findOne({ noID: recvMsg.sender.id }, function (err, foundUser) {
     if (foundUser) {
@@ -365,14 +358,13 @@ function sendHorny(client, recvMsg, attr) {
 }
 
 function sendReddit(client, recvMsg, query) {
-
   axios
     .get("https://meme-api.herokuapp.com/gimme/" + _.camelCase(query))
     .then((response) => {
       if (response.status === 200) {
         console.log(response.status + "page loaded");
         let json = response.data;
-        
+
         let title = json.title;
         let img = json.url;
         if (json.nsfw) {
@@ -382,7 +374,7 @@ function sendReddit(client, recvMsg, query) {
             console.log("good subreddit found");
             sendImage(client, recvMsg, img, title);
           } else {
-            console.log("redirecting to giphy")
+            console.log("redirecting to giphy");
             sendGiphy(client, recvMsg, query);
           }
         }
@@ -392,9 +384,8 @@ function sendReddit(client, recvMsg, query) {
     })
     .catch((e) => {
       console.log(e);
-      console.log("redirecting to giphy")
-        sendGiphy(client, recvMsg, query);
-      
+      console.log("redirecting to giphy");
+      sendGiphy(client, recvMsg, query);
     });
 }
 
