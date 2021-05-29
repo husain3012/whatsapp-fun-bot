@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model("user", userSchema);
 
+// Variables:
+let preprocessor = ".";
+let autoResponseEnabled = true;
+
 venom
   .create()
   .then((client) => start(client))
@@ -38,10 +42,13 @@ function start(client) {
   client.onMessage((message) => {
     createOrFindUser(message);
     message.body = _.toLower(message.body);
-    if (message.body.slice(0, 1) === ".") {
-      console.log(message);
+    if (autoResponseEnabled) {
+      autoResponse(client, message);
+    }
 
+    if (message.body.slice(0, 1) === preprocessor) {
       let commands = message.body.slice(1).split(" ");
+
       pre = commands[0];
       attr = commands[1];
       query = splitAtFirstSpace(message.body.slice(1))[1];
@@ -89,12 +96,13 @@ function start(client) {
         case "scramble":
           // scrambleGame(client, message, false);
           break;
+        case "test":
+          sendGiphy(client, message, query);
+          break;
         case "help":
           sendHelp(client, message);
           break;
         default:
-          customResponse(client, message, pre);
-          // scrambleGame(client, message, pre);
       }
     }
   });
@@ -194,6 +202,20 @@ function sendInsult(client, message, attr) {
   }
 }
 
+function sendFile(client, message, file, caption) {
+  if(caption===undefined){
+    caption=""
+  }
+  client
+    .sendFile(message.from, file, "file_name", caption)
+    .then((result) => {
+      console.log("Result: ", result); //return object success
+    })
+    .catch((erro) => {
+      console.error("Error when sending: ", erro); //return object error
+    });
+}
+
 function sendGifAsSticker(client, recvMsg, attr) {
   if (attr.length < 1) {
     attr = "What you want";
@@ -252,6 +274,20 @@ function sendImageAsSticker(client, recvcMsg, img) {
     });
 }
 
+function sendGiphy(client, message, query) {
+  axios
+    .get("https://api.giphy.com/v1/gifs/search", { params: { api_key: process.env.GIPHYKEY, q: query } })
+    .then((response) => {
+      let rand = Math.floor(Math.random() * response.data.data.length);
+      let gif = response.data.data[rand];
+      let gifVidUrl = gif.images.original.mp4;
+      sendFile(client, message, gifVidUrl);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+}
+
 function imgurSearch(client, recvMsg, query) {
   console.log("Fetching from imgur");
   const config = {
@@ -306,6 +342,10 @@ function makeUserAdult(client, user, attr) {
 }
 
 function sendHorny(client, recvMsg, attr) {
+  nsfwSubreddits=["gooned","gonewild","boobs","cumsluts", "blowjob", "nsfwhardcore"]
+  if(attr===undefined){
+    attr = nsfwSubreddits[Math.floor(Math.random()*nsfwSubreddits.length)]
+  }
   User.findOne({ noID: recvMsg.sender.id }, function (err, foundUser) {
     if (foundUser) {
       if (foundUser.adult) {
@@ -324,34 +364,39 @@ function sendHorny(client, recvMsg, attr) {
   });
 }
 
-function sendReddit(client, recvMsg, attr, query) {
-  if (attr != query) {
-    imgurSearch(client, recvMsg, query);
-  } else {
-    axios
-      .get("https://meme-api.herokuapp.com/gimme/" + attr)
-      .then((response) => {
-        if (response.status === 200) {
-          console.log(response.status + "page loaded");
-          let json = response.data;
-          console.log("meme found");
-          let title = json.title;
-          let img = json.url;
-          if (json.nsfw) {
-            sendText(client, recvMsg, "NSFW content not allowed.");
-          } else {
-            sendImage(client, recvMsg, img, title);
-          }
+function sendReddit(client, recvMsg, query) {
+  query = _.camelCase(query);
+
+  axios
+    .get("https://meme-api.herokuapp.com/gimme/" + query)
+    .then((response) => {
+      if (response.status === 200) {
+        console.log(response.status + "page loaded");
+        let json = response.data;
+        
+        let title = json.title;
+        let img = json.url;
+        if (json.nsfw) {
+          sendGiphy(client, recvMsg, query);
         } else {
-          console.log(response.status);
+          if (json.ups > 100) {
+            console.log("good subreddit found");
+            sendImage(client, recvMsg, img, title);
+          } else {
+            console.log("redirecting to giphy")
+            sendGiphy(client, recvMsg, query);
+          }
         }
-      })
-      .catch((e) => {
-        if (e.response.status === 404) {
-          imgurSearch(client, recvMsg, attr);
-        }
-      });
-  }
+      } else {
+        console.log(response.status);
+      }
+    })
+    .catch((e) => {
+      console.log(e);
+      console.log("redirecting to giphy")
+        sendGiphy(client, recvMsg, query);
+      
+    });
 }
 
 function scrambleGame(client, message, answer) {
@@ -362,7 +407,7 @@ function scrambleGame(client, message, answer) {
     sendText(client, message, scrambled_word);
   } else {
     if (message.hasOwnProperty("quotedParticipant")) {
-      console.log("checkongscramble answer")
+      console.log("checkongscramble answer");
       if (message.quotedParticipent === "917017919847@c.us") {
         if (message.quotedMsg.body === scrambled_word && answer === original_word) {
           sendReply(client, message, "Good Work");
@@ -374,17 +419,25 @@ function scrambleGame(client, message, answer) {
   }
 }
 
-function customResponse(client, recvMsg, pre) {
-  if (pre === "khushi" && !recvMsg.isGroupMsg) {
-    sendImageAsSticker(client, recvMsg, __dirname + "/data/images/chutiya.png");
+function autoResponse(client, message) {
+  let fuck = ["fuck you", "fuck off", "fo", "fu"];
+  if (fuck.includes(_.toLower(message.body)) && !message.isGroupMsg) {
+    User.findOne({ noID: message.sender.id }, function (err, foundUser) {
+      if (foundUser) {
+        if (foundUser.adult) {
+          sendReply(client, message, "Fuck You Too!");
+          sendImageAsSticker(client, message, __dirname + "/data/images/fuck" + Math.ceil(Math.random() * 5) + ".jpg");
+        } else {
+          console.log(foundUser);
+        }
+      }
+    });
   }
 }
 
 function sendHelp(client, user) {
-  let help =
-    "*.help*: Sends this message.\n\n*.truth*: Sends a truth question.\n\n*.dare*: Sends a dare.\n\n*.nhie*: Sends a Never have i ever questoin.\n\n*.roast <name>*: Roasts entered user.\n\n*.meme*: Sends a fresh meme from r/memes.\n\n*.gimme <search>*: Sends a relatable image from a matching subreddit. Example: .gimme PuppySmiles\n\n*.sticker <search>*: Sends a relatble sticker. Example: .sticker Thank You";
-  let helpAdult =
-    "*.help*: Sends this message.\n\n*.truth*: Sends a truth question. Use _.truth r_ for adult questions.\n\n*.dare*: Sends a dare. Use _.dare r_ for adult dares.\n\n*.nhie*: Sends a Never have i ever questoin. Use _.nhie r_ for adult questions.\n\n*.roast <name>*: Roasts entered user.\n\n*.meme*: Sends a fresh meme from r/memes. Use _.meme r_ for adult memes.\n\n*.gimme <search>*: Sends a relatable image from a matching subreddit. Example: .gimme PuppySmiles\n\n*.sticker <search>*: Sends a relatble sticker. Example: .sticker Thank You\n\n*.horny <search>*: Supports NSFW images. Example: _.horny butt_";
+  let help = `*${preprocessor}help*: Sends this message.\n\n*${preprocessor}truth*: Sends a truth question.\n\n*${preprocessor}dare*: Sends a dare.\n\n*${preprocessor}nhie*: Sends a Never have i ever questoin.\n\n*${preprocessor}roast <name>*: Roasts entered user.\n\n*${preprocessor}meme*: Sends a fresh meme from r/memes.\n\n*${preprocessor}gimme <search>*: Sends a relatable image from a matching subreddit. Example: ${preprocessor}gimme PuppySmiles\n\n*${preprocessor}sticker <search>*: Sends a relatble sticker. Example: ${preprocessor}sticker Thank You`;
+  let helpAdult = `*${preprocessor}help*: Sends this message.\n\n*${preprocessor}truth*: Sends a truth question. Use _${preprocessor}truth r_ for adult questions.\n\n*${preprocessor}dare*: Sends a dare. Use _${preprocessor}dare r_ for adult dares.\n\n*${preprocessor}nhie*: Sends a Never have i ever questoin. Use _${preprocessor}nhie r_ for adult questions.\n\n*${preprocessor}roast <name>*: Roasts entered user.\n\n*${preprocessor}meme*: Sends a fresh meme from r/memes. Use _${preprocessor}meme r_ for adult memes.\n\n*${preprocessor}gimme <search>*: Sends a relatable image from a matching subreddit. Example: ${preprocessor}gimme PuppySmiles\n\n*${preprocessor}sticker <search>*: Sends a relatble sticker. Example: ${preprocessor}sticker Thank You\n\n*${preprocessor}horny <search>*: Supports NSFW images. Example: _${preprocessor}horny butt_`;
   User.findOne({ noID: user.sender.id }, function (err, foundUser) {
     if (foundUser) {
       if (foundUser.adult && !user.isGroupMsg) {

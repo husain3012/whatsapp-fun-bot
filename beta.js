@@ -324,9 +324,15 @@ function sendHorny(client, recvMsg, attr) {
   });
 }
 
+function sendGiphy(client, message, query){
+  axios.get("api.giphy.com/v1/gifs/search", {params: {api_key: process.env.GIPHYKEY, q:query}}).then(result=>{
+    console.log(result)
+  })
+}
+
 function sendReddit(client, recvMsg, attr, query) {
   if (attr != query) {
-    imgurSearch(client, recvMsg, query);
+    sendGiphy(client, recvMsg, query);
   } else {
     axios
       .get("https://meme-api.herokuapp.com/gimme/" + attr)
