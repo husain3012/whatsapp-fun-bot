@@ -254,23 +254,25 @@ function sendGifAsSticker(client, recvMsg, query) {
     });
 }
 
-
+let makeStickerTries = 0
 function makeSticker(client, recvMsg, query){
-  gi
+  makeStickerTries +=1;
 
   axios
     .get("api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query } })
     .then((response) => {
-      let gifurl = response.data.data.images.fixed_height.url;
+      let gifurl = response.data.data.images.fixed_height_small;
       client
         .sendImageAsStickerGif(recvMsg.from, gifurl)
         .then((result) => {
           console.log("Result: ", result); //return object success
+          makeStickerTries=0;
         
 
         })
         .catch((erro) => {
           console.error(", Trying again, Error when sending: ", erro); //return object error
+          makeSticker(client, recvMsg, query)
           
         });
     });
