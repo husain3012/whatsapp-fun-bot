@@ -30,6 +30,7 @@ const User = mongoose.model("user", userSchema);
 // Variables:
 let preprocessor = ".";
 let autoResponseEnabled = true;
+let adultPassword = "69forlife";
 
 venom
   .create()
@@ -218,35 +219,35 @@ function sendFile(client, message, file, caption) {
     });
 }
 
-function sendGifAsSticker(client, recvMsg, attr) {
+
+
+let gifStickerTry = 0;
+function sendGifAsSticker(client, recvMsg, query) {
+  gifStickerTry +=1;
   if (attr.length < 1) {
     attr = "What you want";
   }
   console.log(attr);
   axios
-    .get("https://api.gfycat.com/v1/stickers/search", { params: { search_text: attr } })
+    .get("https://api.giphy.com/v1/gifs/search", { params: { api_key: process.env.GIPHYKEY, q: query } })
     .then((response) => {
-      if (response.status === 200) {
-        return response.data;
-      } else {
-        console.log(response.status);
-        return false;
-      }
-    })
-    .then((results) => {
-      if (results) {
-        let rand = Math.floor(Math.random() * results.gfycats.length);
-        let gif = results.gfycats[rand].gif100px;
-        client
-          .sendImageAsStickerGif(recvMsg.from, gif)
-          .then((result) => {
-            console.log("Result: ", result); //return object success
-          })
-          .catch((erro) => {
-            console.error(", Trying again, Error when sending: ", erro); //return object error
+      let rand = Math.floor(Math.random() * response.data.data.length);
+      let gif = response.data.data[rand];
+      let gifurl = gif.images.original.url;
+      client
+        .sendImageAsStickerGif(recvMsg.from, gifurl)
+        .then((result) => {
+          console.log("Result: ", result); //return object success
+          gifStickerTry=0;
+
+        })
+        .catch((erro) => {
+          console.error(", Trying again, Error when sending: ", erro); //return object error
+          if(gifStickerTry<3){
             sendGifAsSticker(client, recvMsg, attr);
-          });
-      }
+          }
+          
+        });
     });
 }
 
@@ -306,8 +307,8 @@ function sendRedditMeme(client, recvMsg, attr) {
         memeSource = ["ProgrammerHumor"];
       }
     }
-    let meme =  memeSource[Math.floor(Math.random()*memeSource.length)];
-    console.log("Searching for meme " + meme );
+    let meme = memeSource[Math.floor(Math.random() * memeSource.length)];
+    console.log("Searching for meme " + meme);
     axios.get("https://meme-api.herokuapp.com/gimme/" + meme).then((response) => {
       if (response.status === 200) {
         let json = response.data;
@@ -323,7 +324,7 @@ function sendRedditMeme(client, recvMsg, attr) {
 function makeUserAdult(client, user, attr) {
   console.log(attr);
   console.log(user.isGroupMsg);
-  if (attr === "69forlife") {
+  if (attr === adultPassword) {
     User.findOneAndUpdate({ noID: user.sender.id }, { $set: { adult: true } }, function (err) {
       if (err) {
         console.log(err);
