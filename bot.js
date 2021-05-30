@@ -34,7 +34,7 @@ let userLastCommand;
 // Variables:
 let preprocessor = ".";
 let autoResponseEnabled = true;
-let adultPassword = "69forlife";
+let adultPassword = process.env.ADULTPW;
 
 venom
   .create()
@@ -127,11 +127,11 @@ function start(client) {
         case "test":
           sendGiphy(client, message, query);
           break;
-        case "gali": 
-        console.log("calling gali")
-        sendGali(client, message);
-        
-        break;
+        case "gali":
+          console.log("calling gali");
+          sendGali(client, message);
+
+          break;
         case "help":
           sendHelp(client, message);
           break;
@@ -424,22 +424,24 @@ function sendHorny(client, recvMsg, attr) {
   if (attr === undefined) {
     attr = nsfwSubreddits[Math.floor(Math.random() * nsfwSubreddits.length)];
   }
-  User.findOne({ noID: recvMsg.sender.id }, function (err, foundUser) {
-    if (foundUser) {
-      if (foundUser.adult) {
-        axios.get("https://meme-api.herokuapp.com/gimme/" + attr).then((result) => {
-          if (result.data.code === 404) {
-            sendReply(client, recvMsg, "Try again");
-          } else if (result.status === 200) {
-            let image = result.data.url;
-            let title = result.data.title;
-            console.log(image);
-            sendImage(client, recvMsg, image, title);
-          }
-        });
+  if (!msg.isGroupMsg || message.chat.groupMetadata.id === "918755615361-1610041147@g.us") {
+    User.findOne({ noID: recvMsg.sender.id }, function (err, foundUser) {
+      if (foundUser) {
+        if (foundUser.adult) {
+          axios.get("https://meme-api.herokuapp.com/gimme/" + attr).then((result) => {
+            if (result.data.code === 404) {
+              sendReply(client, recvMsg, "Try again");
+            } else if (result.status === 200) {
+              let image = result.data.url;
+              let title = result.data.title;
+              console.log(image);
+              sendImage(client, recvMsg, image, title);
+            }
+          });
+        }
       }
-    }
-  });
+    });
+  }
 }
 
 function sendReddit(client, recvMsg, query) {
@@ -526,7 +528,7 @@ function sendGali(client, message) {
   let noun1, noun2, conjection;
   let randNoun1 = random(3);
   let randNoun2 = random(3);
-  console.log("generating gali")
+  console.log("generating gali");
 
   while (noun1 === noun2) {
     if (randNoun1 === 0) {
@@ -548,12 +550,12 @@ function sendGali(client, message) {
       conjection = "ke";
     }
   }
-  
-  console.log("gali genreated")
+
+  console.log("gali genreated");
 
   let gali = noun1 + " " + conjection + " " + noun2;
-  if (!message.isGroupMsg) {
-    console.log("sending gali")
+  if (!message.isGroupMsg || message.chat.groupMetadata.id === "918755615361-1610041147@g.us") {
+    console.log("sending gali");
     sendReply(client, message, gali);
   }
 }
