@@ -236,7 +236,7 @@ function sendGifAsSticker(client, recvMsg, query) {
       let gif = response.data.data[rand];
       let gifurl = gif.images.original.url;
       client
-        .sendImageAsStickerGif(recvMsg.from, gifurl)
+        .sendFile(recvMsg.from, gifurl)
         .then((result) => {
           console.log("Result: ", result); //return object success
           gifStickerTry = 0;
