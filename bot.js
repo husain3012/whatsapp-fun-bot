@@ -29,6 +29,7 @@ const User = mongoose.model("user", userSchema);
 
 let makeStickerTries = 0;
 let gifStickerTry = 0;
+let userLastCommand;
 
 // Variables:
 let preprocessor = ".";
@@ -54,6 +55,19 @@ function start(client) {
       console.log(message);
       // console.log(recvMsg.chat.name)
       let commands = message.body.slice(1).split(" ");
+      let supportedCommands = [
+        "truth",
+        "dare",
+        "nhie",
+        "roast",
+        "sticker",
+        "meme",
+        "adult",
+        "horny",
+        "gimme",
+        "make",
+        "help",
+      ];
 
       pre = commands[0];
       attr = commands[1];
@@ -100,13 +114,12 @@ function start(client) {
           sendReddit(client, message, query);
           break;
         case "make":
-          if(Math.floor(Math.random()*2)){
+          if (Math.floor(Math.random() * 2)) {
             makeSticker(client, message, query);
-          }
-          else{
+          } else {
             makeGif(client, message, query);
           }
-          
+
           break;
         case "scramble":
           // scrambleGame(client, message, false);
@@ -114,6 +127,8 @@ function start(client) {
         case "test":
           sendGiphy(client, message, query);
           break;
+        case "galide":
+          gali(client, message);
         case "help":
           sendHelp(client, message);
           break;
@@ -260,14 +275,15 @@ function sendGifAsSticker(client, recvMsg, query) {
 
 function makeGif(client, recvMsg, query) {
   makeStickerTries += 1;
-  let howWeird = Math.floor(Math.random()*11);
+  let howWeird = Math.floor(Math.random() * 11);
 
   axios
-    .get("https://api.giphy.com/v1/gifs/translate", { params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird } })
+    .get("https://api.giphy.com/v1/gifs/translate", {
+      params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird },
+    })
     .then((response) => {
       if (response.status === 200) {
-        try{
-
+        try {
           let gifurl = response.data.data.images.original.mp4;
           console.log(gifurl);
           client
@@ -282,20 +298,20 @@ function makeGif(client, recvMsg, query) {
                 makeGif(client, recvMsg, query);
               }
             });
-        }
-        catch(err){
+        } catch (err) {
           console.log(err);
         }
-       
       }
     });
 }
 function makeSticker(client, recvMsg, query) {
   makeStickerTries += 1;
-  let howWeird = Math.floor(Math.random()*11);
+  let howWeird = Math.floor(Math.random() * 11);
 
   axios
-    .get("https://api.giphy.com/v1/gifs/translate", { params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird } })
+    .get("https://api.giphy.com/v1/gifs/translate", {
+      params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird },
+    })
     .then((response) => {
       if (response.status === 200) {
         let gifurl = response.data.data.images.fixed_height_downsampled.url;
@@ -488,6 +504,48 @@ function autoResponse(client, message) {
         }
       }
     });
+  }
+}
+
+function gali(client, message) {
+  let maleNouns = ["lund", "hath", "chodha"];
+
+  let femaleNouns = ["gand", "chut", "bhosdi", "randi", "tatti", "chipkali"];
+
+  let neutralNouns = ["tatte", "chutad", "baal"];
+
+  let adjective = ["chutiya", "haggu"];
+  let verb = ["mar", "chodh", "baja"];
+
+  let nouns = [maleNouns, femaleNouns, neutralNouns];
+  let noun1, noun2, conjection;
+  let randNoun1 = random(3);
+  let randNoun2 = random(3);
+
+  while (noun1 === noun2) {
+    if (randNoun1 === 0) {
+      noun1 = maleNouns[random(maleNouns.length)];
+    } else if (randNoun1 === 1) {
+      noun1 = femaleNouns[random(femaleNouns.length)];
+    } else {
+      noun1 = neutralNouns[random(neutralNouns.length)];
+    }
+
+    if (randNoun2 === 0) {
+      noun2 = maleNouns[random(maleNouns.length)];
+      conjection = "ka";
+    } else if (randNoun2 === 1) {
+      noun2 = femaleNouns[random(femaleNouns.length)];
+      conjection = "ki";
+    } else {
+      noun2 = neutralNouns[random(neutralNouns.length)];
+      conjection = "ke";
+    }
+  }
+
+  let gali = noun1 + " " + conjection + " " + noun2;
+  if (!message.isGroupMsg) {
+    sendReply(client, message, gali);
   }
 }
 
