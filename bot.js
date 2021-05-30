@@ -236,15 +236,14 @@ function sendGifAsSticker(client, recvMsg, query) {
       let gif = response.data.data[rand];
       let gifurl = gif.images.original.url;
       client
-        .sendFile(recvMsg.from, gifurl)
-        .then((result) => {
-          console.log("Result: ", result); //return object success
-          gifStickerTry = 0;
-        })
+    .sendFile(message.from, gifurl, "file_name")
+    .then((result) => {
+      console.log("Result: ", result); //return object success
+    })
         .catch((erro) => {
           console.error(", Trying again, Error when sending: ", erro); //return object error
           if (gifStickerTry < 3) {
-            sendGifAsSticker(client, recvMsg, attr);
+            sendGifAsSticker(client, recvMsg, query);
           }
         });
     });
