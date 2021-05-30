@@ -420,11 +420,11 @@ function makeUserAdult(client, user, attr) {
 }
 
 function sendHorny(client, recvMsg, attr) {
-  nsfwSubreddits = ["gooned", "gonewild", "boobs", "cumsluts", "blowjob", "nsfwhardcore"];
-  if (attr === undefined) {
-    attr = nsfwSubreddits[Math.floor(Math.random() * nsfwSubreddits.length)];
-  }
-  if (!msg.isGroupMsg || message.chat.groupMetadata.id === "918755615361-1610041147@g.us") {
+  if (!recvMsg.isGroupMsg || recvMsg.chat.groupMetadata.id === "918755615361-1610041147@g.us") {
+    nsfwSubreddits = ["gooned", "gonewild", "boobs", "cumsluts", "blowjob", "nsfwhardcore"];
+    if (attr === undefined) {
+      attr = nsfwSubreddits[Math.floor(Math.random() * nsfwSubreddits.length)];
+    }
     User.findOne({ noID: recvMsg.sender.id }, function (err, foundUser) {
       if (foundUser) {
         if (foundUser.adult) {
@@ -511,6 +511,7 @@ function autoResponse(client, message) {
     });
   }
 }
+
 function random(mul) {
   return Math.floor(Math.random() * mul);
 }
