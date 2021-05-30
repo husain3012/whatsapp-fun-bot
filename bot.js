@@ -27,6 +27,9 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model("user", userSchema);
 
+let makeStickerTries = 0;
+let gifStickerTry = 0;
+
 // Variables:
 let preprocessor = ".";
 let autoResponseEnabled = true;
@@ -224,7 +227,7 @@ function sendFile(client, message, file, caption) {
 
 
 
-let gifStickerTry = 0;
+
 function sendGifAsSticker(client, recvMsg, query) {
   gifStickerTry +=1;
   if (attr === undefined) {
@@ -254,12 +257,12 @@ function sendGifAsSticker(client, recvMsg, query) {
     });
 }
 
-let makeStickerTries = 0
+
 function makeSticker(client, recvMsg, query){
   makeStickerTries +=1;
 
   axios
-    .get("api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query } })
+    .get("https://api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query } })
     .then((response) => {
       let gifurl = response.data.data.images.fixed_height_small;
       client
