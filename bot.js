@@ -129,6 +129,7 @@ function start(client) {
           break;
         case "gali":
           gali(client, message);
+          break;
         case "help":
           sendHelp(client, message);
           break;
