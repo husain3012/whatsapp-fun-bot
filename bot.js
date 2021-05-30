@@ -224,12 +224,12 @@ function sendFile(client, message, file, caption) {
 let gifStickerTry = 0;
 function sendGifAsSticker(client, recvMsg, query) {
   gifStickerTry +=1;
-  if (attr.length < 1) {
+  if (attr === undefined) {
     attr = "What you want";
   }
   console.log(attr);
   axios
-    .get("https://api.giphy.com/v1/gifs/search", { params: { api_key: process.env.GIPHYKEY, q: query } })
+    .get("https://api.giphy.com/v1/stickers/search", { params: { api_key: process.env.GIPHYKEY, q: query } })
     .then((response) => {
       let rand = Math.floor(Math.random() * response.data.data.length);
       let gif = response.data.data[rand];
