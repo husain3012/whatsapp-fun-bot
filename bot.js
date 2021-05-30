@@ -96,7 +96,7 @@ function start(client) {
         case "gimme":
           sendReddit(client, message, query);
           break;
-        case "make":
+          case "make":
           makeSticker(client, message, query);
           break;
         case "scramble":
@@ -222,9 +222,11 @@ function sendFile(client, message, file, caption) {
     });
 }
 
+
+
 let gifStickerTry = 0;
 function sendGifAsSticker(client, recvMsg, query) {
-  gifStickerTry += 1;
+  gifStickerTry +=1;
   if (attr === undefined) {
     attr = "What you want";
   }
@@ -236,39 +238,43 @@ function sendGifAsSticker(client, recvMsg, query) {
       let gif = response.data.data[rand];
       let gifurl = gif.images.original.url;
       client
-    .sendFile(message.from, gifurl, "file_name")
-    .then((result) => {
-      console.log("Result: ", result); //return object success
-    })
+        .sendImageAsStickerGif(recvMsg.from, gifurl)
+        .then((result) => {
+          console.log("Result: ", result); //return object success
+          gifStickerTry=0;
+
+        })
         .catch((erro) => {
           console.error(", Trying again, Error when sending: ", erro); //return object error
-          if (gifStickerTry < 3) {
+          if(gifStickerTry<3){
             sendGifAsSticker(client, recvMsg, query);
           }
+          
         });
     });
 }
 
-function makeSticker(client, recvMsg, query) {
+
+function makeSticker(client, recvMsg, query){
+  gi
+
   axios
     .get("api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query } })
     .then((response) => {
-      let rand = Math.floor(Math.random() * response.data.data.length);
-      let gif = response.data.data[rand];
-      let gifurl = gif.images.original.url;
+      let gifurl = response.data.data.images.fixed_height.url;
       client
         .sendImageAsStickerGif(recvMsg.from, gifurl)
         .then((result) => {
           console.log("Result: ", result); //return object success
-          gifStickerTry = 0;
+        
+
         })
         .catch((erro) => {
           console.error(", Trying again, Error when sending: ", erro); //return object error
-          if (gifStickerTry < 3) {
-            sendGifAsSticker(client, recvMsg, attr);
-          }
+          
         });
     });
+  
 }
 
 function sendImage(client, recvMsg, sentMsg, caption) {
