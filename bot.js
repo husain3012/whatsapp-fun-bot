@@ -275,7 +275,7 @@ function makeSticker(client, recvMsg, query){
         })
         .catch((erro) => {
           console.error(", Trying again, Error when sending: ", erro); //return object error
-          makeSticker(client, recvMsg, query)
+          makeSticker(client, recvMsg, query);
           
         });
     });
