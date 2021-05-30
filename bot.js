@@ -127,9 +127,11 @@ function start(client) {
         case "test":
           sendGiphy(client, message, query);
           break;
-        case "gali":
-          gali(client, message);
-          break;
+        case "gali": 
+        console.log("calling gali")
+        sendGali(client, message);
+        
+        break;
         case "help":
           sendHelp(client, message);
           break;
@@ -507,8 +509,10 @@ function autoResponse(client, message) {
     });
   }
 }
-
-function gali(client, message) {
+function random(mul) {
+  return Math.floor(Math.random() * mul);
+}
+function sendGali(client, message) {
   let maleNouns = ["lund", "hath", "chodha"];
 
   let femaleNouns = ["gand", "chut", "bhosdi", "randi", "tatti", "chipkali"];
@@ -522,6 +526,7 @@ function gali(client, message) {
   let noun1, noun2, conjection;
   let randNoun1 = random(3);
   let randNoun2 = random(3);
+  console.log("generating gali")
 
   while (noun1 === noun2) {
     if (randNoun1 === 0) {
@@ -544,9 +549,11 @@ function gali(client, message) {
     }
   }
   
+  console.log("gali genreated")
 
   let gali = noun1 + " " + conjection + " " + noun2;
   if (!message.isGroupMsg) {
+    console.log("sending gali")
     sendReply(client, message, gali);
   }
 }
