@@ -127,7 +127,7 @@ function start(client) {
         case "test":
           sendGiphy(client, message, query);
           break;
-        case "galide":
+        case "gali":
           gali(client, message);
         case "help":
           sendHelp(client, message);
@@ -542,6 +542,7 @@ function gali(client, message) {
       conjection = "ke";
     }
   }
+  
 
   let gali = noun1 + " " + conjection + " " + noun2;
   if (!message.isGroupMsg) {
