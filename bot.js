@@ -96,6 +96,9 @@ function start(client) {
         case "gimme":
           sendReddit(client, message, query);
           break;
+        case "make":
+          makeSticker(client, message, query);
+          break;
         case "scramble":
           // scrambleGame(client, message, false);
           break;
@@ -219,11 +222,9 @@ function sendFile(client, message, file, caption) {
     });
 }
 
-
-
 let gifStickerTry = 0;
 function sendGifAsSticker(client, recvMsg, query) {
-  gifStickerTry +=1;
+  gifStickerTry += 1;
   if (attr === undefined) {
     attr = "What you want";
   }
@@ -238,15 +239,35 @@ function sendGifAsSticker(client, recvMsg, query) {
         .sendImageAsStickerGif(recvMsg.from, gifurl)
         .then((result) => {
           console.log("Result: ", result); //return object success
-          gifStickerTry=0;
-
+          gifStickerTry = 0;
         })
         .catch((erro) => {
           console.error(", Trying again, Error when sending: ", erro); //return object error
-          if(gifStickerTry<3){
+          if (gifStickerTry < 3) {
             sendGifAsSticker(client, recvMsg, attr);
           }
-          
+        });
+    });
+}
+
+function makeSticker(client, recvMsg, query) {
+  axios
+    .get("api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query } })
+    .then((response) => {
+      let rand = Math.floor(Math.random() * response.data.data.length);
+      let gif = response.data.data[rand];
+      let gifurl = gif.images.original.url;
+      client
+        .sendImageAsStickerGif(recvMsg.from, gifurl)
+        .then((result) => {
+          console.log("Result: ", result); //return object success
+          gifStickerTry = 0;
+        })
+        .catch((erro) => {
+          console.error(", Trying again, Error when sending: ", erro); //return object error
+          if (gifStickerTry < 3) {
+            sendGifAsSticker(client, recvMsg, attr);
+          }
         });
     });
 }
