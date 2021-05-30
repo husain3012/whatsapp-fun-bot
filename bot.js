@@ -266,20 +266,27 @@ function makeGif(client, recvMsg, query) {
     .get("https://api.giphy.com/v1/gifs/translate", { params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird } })
     .then((response) => {
       if (response.status === 200) {
-        let gifurl = response.data.data.images.original.mp4;
-        console.log(gifurl);
-        client
-          .sendFile(recvMsg.from, gifurl)
-          .then((result) => {
-            console.log("Result: ", result); //return object success
-            makeStickerTries = 0;
-          })
-          .catch((erro) => {
-            console.error(", Trying again, Error when sending: ", erro); //return object error
-            if (makeStickerTries < 3) {
-              makeGif(client, recvMsg, query);
-            }
-          });
+        try{
+
+          let gifurl = response.data.data.images.original.mp4;
+          console.log(gifurl);
+          client
+            .sendFile(recvMsg.from, gifurl)
+            .then((result) => {
+              console.log("Result: ", result); //return object success
+              makeStickerTries = 0;
+            })
+            .catch((erro) => {
+              console.error(", Trying again, Error when sending: ", erro); //return object error
+              if (makeStickerTries < 3) {
+                makeGif(client, recvMsg, query);
+              }
+            });
+        }
+        catch(err){
+          console.log(err);
+        }
+       
       }
     });
 }
@@ -294,7 +301,7 @@ function makeSticker(client, recvMsg, query) {
         let gifurl = response.data.data.images.fixed_height_downsampled.url;
         console.log(gifurl);
         client
-          .sendGifAsSticker(recvMsg.from, gifurl)
+          .sendImageAsStickerGif(recvMsg.from, gifurl)
           .then((result) => {
             console.log("Result: ", result); //return object success
             makeStickerTries = 0;
