@@ -100,7 +100,13 @@ function start(client) {
           sendReddit(client, message, query);
           break;
         case "make":
-          makeSticker(client, message, query);
+          if(Math.floor(Math.random()*2)){
+            makeSticker(client, message, query);
+          }
+          else{
+            makeGif(client, message, query)
+          }
+          
           break;
         case "scramble":
           // scrambleGame(client, message, false);
@@ -252,18 +258,43 @@ function sendGifAsSticker(client, recvMsg, query) {
     });
 }
 
+function makeGif(client, recvMsg, query) {
+  makeStickerTries += 1;
+  let howWeird = Math.floor(Math.random()*11)
+
+  axios
+    .get("https://api.giphy.com/v1/gifs/translate", { params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird } })
+    .then((response) => {
+      if (response.status === 200) {
+        let gifurl = response.data.data.images.original.mp4;
+        console.log(gifurl);
+        client
+          .sendFile(recvMsg.from, gifurl)
+          .then((result) => {
+            console.log("Result: ", result); //return object success
+            makeStickerTries = 0;
+          })
+          .catch((erro) => {
+            console.error(", Trying again, Error when sending: ", erro); //return object error
+            if (makeStickerTries < 3) {
+              makeGif(client, recvMsg, query);
+            }
+          });
+      }
+    });
+}
 function makeSticker(client, recvMsg, query) {
   makeStickerTries += 1;
   let howWeird = Math.floor(Math.random()*11)
 
   axios
-    .get("https://api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird } })
+    .get("https://api.giphy.com/v1/gifs/translate", { params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird } })
     .then((response) => {
       if (response.status === 200) {
-        let gifurl = response.data.data.images.fixed_height_small.url;
+        let gifurl = response.data.data.images.fixed_height_downsampled.url;
         console.log(gifurl);
         client
-          .sendImageAsStickerGif(recvMsg.from, gifurl)
+          .sendGifAsSticker(recvMsg.from, gifurl)
           .then((result) => {
             console.log("Result: ", result); //return object success
             makeStickerTries = 0;
