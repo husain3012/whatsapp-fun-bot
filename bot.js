@@ -99,7 +99,7 @@ function start(client) {
         case "gimme":
           sendReddit(client, message, query);
           break;
-          case "make":
+        case "make":
           makeSticker(client, message, query);
           break;
         case "scramble":
@@ -225,11 +225,8 @@ function sendFile(client, message, file, caption) {
     });
 }
 
-
-
-
 function sendGifAsSticker(client, recvMsg, query) {
-  gifStickerTry +=1;
+  gifStickerTry += 1;
   if (attr === undefined) {
     attr = "What you want";
   }
@@ -244,42 +241,41 @@ function sendGifAsSticker(client, recvMsg, query) {
         .sendImageAsStickerGif(recvMsg.from, gifurl)
         .then((result) => {
           console.log("Result: ", result); //return object success
-          gifStickerTry=0;
-
+          gifStickerTry = 0;
         })
         .catch((erro) => {
           console.error(", Trying again, Error when sending: ", erro); //return object error
-          if(gifStickerTry<3){
+          if (gifStickerTry < 3) {
             sendGifAsSticker(client, recvMsg, query);
           }
-          
         });
     });
 }
 
-
-function makeSticker(client, recvMsg, query){
-  makeStickerTries +=1;
+function makeSticker(client, recvMsg, query) {
+  makeStickerTries += 1;
+  let howWeird = Math.floor(Math.random()*11)
 
   axios
-    .get("https://api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query } })
+    .get("https://api.giphy.com/v1/stickers/translate", { params: { api_key: process.env.GIPHYKEY, s: query, weirdness: howWeird } })
     .then((response) => {
-      let gifurl = response.data.data.images.fixed_height_small;
-      client
-        .sendImageAsStickerGif(recvMsg.from, gifurl)
-        .then((result) => {
-          console.log("Result: ", result); //return object success
-          makeStickerTries=0;
-        
-
-        })
-        .catch((erro) => {
-          console.error(", Trying again, Error when sending: ", erro); //return object error
-          makeSticker(client, recvMsg, query);
-          
-        });
+      if (response.status === 200) {
+        let gifurl = response.data.data.images.fixed_height_small.url;
+        console.log(gifurl);
+        client
+          .sendImageAsStickerGif(recvMsg.from, gifurl)
+          .then((result) => {
+            console.log("Result: ", result); //return object success
+            makeStickerTries = 0;
+          })
+          .catch((erro) => {
+            console.error(", Trying again, Error when sending: ", erro); //return object error
+            if (makeStickerTries < 3) {
+              makeSticker(client, recvMsg, query);
+            }
+          });
+      }
     });
-  
 }
 
 function sendImage(client, recvMsg, sentMsg, caption) {
