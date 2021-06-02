@@ -628,6 +628,12 @@ function quiz(client, message) {
 }
 
 function checkAnswerToQuiz(client, message) {
+  let user;
+  if (message.isGroupMsg) {
+    user = message.author;
+  } else {
+    user = message.from;
+  }
   let id = parseInt(message.quotedMsg.body.split("/")[1]);
   console.log("Looking for ques: " + id);
   let inputAns = _.toLower(message.body);
@@ -635,14 +641,14 @@ function checkAnswerToQuiz(client, message) {
     if (!err && foundQues) {
       if (foundQues.answers.includes(inputAns)) {
         sendReply(client, message, "Good Work, you got 10 points");
-        gainPoints(message.author, 10);
+        gainPoints(user, 10);
         Ques.deleteOne({ _id: id }, function (err) {
           console.log(err);
         });
         // lookingForAnswer = false;
       } else {
         sendReply(client, message, "Ow, You lost 3 points, try again!");
-        gainPoints(message.author, -3);
+        gainPoints(user, -3);
         console.log(inputAns + foundQues.answers);
       }
     } else {
@@ -674,6 +680,13 @@ function gainPoints(user, points) {
 }
 
 function getScore(client, message) {
+  console.log(message);
+  let user;
+  if (message.isGroupMsg) {
+    user = message.author;
+  } else {
+    user = message.from;
+  }
   User.findOne({ noID: message.from }, function (err, foundUser) {
     sendReply(client, message, "Your current score is " + foundUser.score);
   });
