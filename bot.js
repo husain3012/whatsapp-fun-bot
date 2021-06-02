@@ -34,9 +34,9 @@ const quizSchema = new mongoose.Schema({
 
 const Ques = mongoose.model("question", quizSchema);
 const User = mongoose.model("user", userSchema);
-Ques.deleteMany({}, function(){
-  console.log("questions db cleared")
-})
+Ques.deleteMany({}, function () {
+  console.log("questions db cleared");
+});
 let makeStickerTries = 0;
 let gifStickerTry = 0;
 let userLastCommand;
@@ -59,7 +59,6 @@ function start(client) {
     createOrFindUser(message);
 
     if (
-      
       message.quotedParticipant === "917017919847@c.us" &&
       ["a", "b", "c", "d", "e", "f"].includes(_.toLower(message.body))
     ) {
@@ -137,9 +136,9 @@ function start(client) {
         case "score":
           getScore(client, message);
           break;
-          case "rank":
-            getRank(client, message);
-            break;
+        case "rank":
+          getRank(client, message);
+          break;
         case "make":
           if (Math.floor(Math.random() * 2)) {
             makeSticker(client, message, query);
@@ -223,7 +222,7 @@ function createOrFindUser(userInfo) {
           noID: userInfo.sender.id,
           name: userInfo.sender.pushname,
           adult: false,
-          score: 0
+          score: 0,
         });
         person.save();
       } else {
@@ -637,11 +636,13 @@ function checkAnswerToQuiz(client, message) {
       if (foundQues.answers.includes(inputAns)) {
         sendReply(client, message, "Good Work, you got 10 points");
         gainPoints(message.from, 10);
-        Ques.deleteOne({ _id: id }, function (err) {console.log(err)});
+        Ques.deleteOne({ _id: id }, function (err) {
+          console.log(err);
+        });
         // lookingForAnswer = false;
       } else {
         sendReply(client, message, "Ow, You lost 3 points, try again!");
-        gainPoints(message.from, -10);
+        gainPoints(message.from, -3);
         console.log(inputAns + foundQues.answers);
       }
     } else {
@@ -678,14 +679,16 @@ function getScore(client, message) {
   });
 }
 
-function getRank(cleint, message){
-  User.find({}).sort([['score', -1]]).exec(function(err, docs) {
-    let topTen;
-    for(let i = 0; i <10; i++){
-      topTen = docs[i].name + ": " + docs[i].score + "\n";
-    }
-    sendText(client, message, topTen)
-  });
+function getRank(cleint, message) {
+  User.find({})
+    .sort([["score", -1]])
+    .exec(function (err, docs) {
+      let topTen;
+      for (let i = 0; i < 10; i++) {
+        topTen = docs[i].name + ": " + docs[i].score + "\n";
+      }
+      sendText(client, message, topTen);
+    });
 }
 
 function sendHelp(client, user) {
