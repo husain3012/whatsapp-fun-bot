@@ -663,11 +663,9 @@ function gainPoints(user, points) {
       console.log(foundUser);
 
       let newScore;
-      if (foundUser.hasOwnProperty("score")) {
+
         newScore = foundUser.score + points;
-      } else {
-        newScore = points;
-      }
+      
       console.log("updating score");
 
       User.findOneAndUpdate({ noID: user }, { $set: { score: newScore } }, function (e) {
@@ -687,20 +685,20 @@ function getScore(client, message) {
   } else {
     user = message.from;
   }
-  User.findOne({ noID: message.from }, function (err, foundUser) {
+  User.findOne({ noID: user }, function (err, foundUser) {
     sendReply(client, message, "Your current score is " + foundUser.score);
   });
 }
 
-function getRank(cleint, message) {
+function getRank(client, message) {
   User.find({})
-    .sort([["score", -1]])
+    .sort("-score")
     .exec(function (err, docs) {
-      let topTen;
-      for (let i = 0; i < 10; i++) {
-        topTen = docs[i].name + ": " + docs[i].score + "\n";
+      let topFive = "";
+      for (let i = 0; i < 5; i++) {
+        topFive += docs[i].name + ": " + docs[i].score + "\n";
       }
-      sendText(client, message, topTen);
+      sendText(client, message, topFive);
     });
 }
 
