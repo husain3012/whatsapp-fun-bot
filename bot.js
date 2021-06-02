@@ -635,14 +635,14 @@ function checkAnswerToQuiz(client, message) {
     if (!err && foundQues) {
       if (foundQues.answers.includes(inputAns)) {
         sendReply(client, message, "Good Work, you got 10 points");
-        gainPoints(message.from, 10);
+        gainPoints(message.author, 10);
         Ques.deleteOne({ _id: id }, function (err) {
           console.log(err);
         });
         // lookingForAnswer = false;
       } else {
         sendReply(client, message, "Ow, You lost 3 points, try again!");
-        gainPoints(message.from, -3);
+        gainPoints(message.author, -3);
         console.log(inputAns + foundQues.answers);
       }
     } else {
@@ -657,7 +657,7 @@ function gainPoints(user, points) {
       console.log(foundUser);
 
       let newScore;
-      if (foundUser.score) {
+      if (foundUser.hasOwnProperty("score")) {
         newScore = foundUser.score + points;
       } else {
         newScore = points;
@@ -668,7 +668,7 @@ function gainPoints(user, points) {
         console.log(e);
       });
     } else {
-      console.log(err);
+      console.log("err: " + err);
     }
   });
 }
