@@ -46,7 +46,7 @@ let userLastCommand;
 let preprocessor = ".";
 let autoResponseEnabled = true;
 let adultPassword = process.env.ADULTPW;
-
+let rapidApiKey = process.env.COINGECKOKEY;
 venom
   .create()
   .then((client) => start(client))
@@ -138,6 +138,9 @@ function start(client) {
           break;
         case "rank":
           getRank(client, message);
+          break;
+        case "stonk":
+          getCrypto(client, message, attr);
           break;
         case "make":
           if (Math.floor(Math.random() * 2)) {
@@ -713,6 +716,42 @@ function sendHelp(client, user) {
       }
     }
   });
+}
+
+function getCrypto(client, message, attr) {
+  const options = {
+    method: "GET",
+    url: "https://coingecko.p.rapidapi.com/coins/" + attr,
+    params: {
+      localization: "true",
+      tickers: "true",
+      market_data: "true",
+      community_data: "true",
+      developer_data: "true",
+      sparkline: "false",
+    },
+    headers: {
+      "x-rapidapi-key": rapidApiKey,
+      "x-rapidapi-host": "coingecko.p.rapidapi.com",
+    },
+  };
+  axios
+    .request(options)
+    .then(function (response) {
+      if(response.status === 200){
+        let currentPrice = response.data.market_data.current_price.inr;
+        let priceChangePer24h = response.data.market_data.price_change_percentage_24h;
+        let coinInfo = "*"+attr+"*:\n\nCurrent Price: " + currentPrice + " INR\n%Change(24h): " + priceChangePer24h;
+      sendText(client, message, coinInfo)
+      }
+      else{
+        console.log(response)
+      }
+    
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
 }
 
 String.prototype.shuffle = function () {
