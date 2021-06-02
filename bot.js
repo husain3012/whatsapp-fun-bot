@@ -34,11 +34,13 @@ const quizSchema = new mongoose.Schema({
 
 const Ques = mongoose.model("question", quizSchema);
 const User = mongoose.model("user", userSchema);
-
+Ques.deleteMany({}, function(){
+  console.log("questions db cleared")
+})
 let makeStickerTries = 0;
 let gifStickerTry = 0;
 let userLastCommand;
-let lookingForAnswer = false;
+// let lookingForAnswer = false;
 
 // Variables:
 let preprocessor = ".";
@@ -56,7 +58,11 @@ function start(client) {
   client.onMessage((message) => {
     createOrFindUser(message);
 
-    if (lookingForAnswer && message.quotedParticipant === "917017919847@c.us") {
+    if (
+      
+      message.quotedParticipant === "917017919847@c.us" &&
+      ["a", "b", "c", "d", "e", "f"].includes(_.toLower(message.body))
+    ) {
       checkAnswerToQuiz(client, message);
     }
     message.body = _.toLower(message.body);
@@ -128,6 +134,12 @@ function start(client) {
         case "quiz":
           quiz(client, message);
           break;
+        case "score":
+          getScore(client, message);
+          break;
+          case "rank":
+            getRank(client, message);
+            break;
         case "make":
           if (Math.floor(Math.random() * 2)) {
             makeSticker(client, message, query);
@@ -211,6 +223,7 @@ function createOrFindUser(userInfo) {
           noID: userInfo.sender.id,
           name: userInfo.sender.pushname,
           adult: false,
+          score: 0
         });
         person.save();
       } else {
@@ -578,6 +591,7 @@ function sendGali(client, message) {
 }
 
 function quiz(client, message) {
+  let categories = ["linux", "bash", "docker", "sql"];
   axios
     .get("https://quizapi.io/api/v1/questions", { params: { apiKey: process.env.QUIZAPI, limit: 1 } })
     .then((response) => {
@@ -606,7 +620,7 @@ function quiz(client, message) {
         answers: correctAnswers,
       });
       ques.save();
-      lookingForAnswer = true;
+      // lookingForAnswer = true;
       sendText(client, message, sendQuestion);
     })
     .catch((err) => {
@@ -619,18 +633,58 @@ function checkAnswerToQuiz(client, message) {
   console.log("Looking for ques: " + id);
   let inputAns = _.toLower(message.body);
   Ques.findOne({ _id: id }, function (err, foundQues) {
-    if (!err) {
+    if (!err && foundQues) {
       if (foundQues.answers.includes(inputAns)) {
-        sendReply(client, message, "Good Work");
-        Ques.findByIdAndDelete(id);
-        lookingForAnswer = false;
+        sendReply(client, message, "Good Work, you got 10 points");
+        gainPoints(message.from, 10);
+        Ques.deleteOne({ _id: id }, function (err) {console.log(err)});
+        // lookingForAnswer = false;
       } else {
-        sendReply(client, message, "Ow, Try again");
+        sendReply(client, message, "Ow, You lost 3 points, try again!");
+        gainPoints(message.from, -10);
         console.log(inputAns + foundQues.answers);
       }
     } else {
       console.log(err);
     }
+  });
+}
+
+function gainPoints(user, points) {
+  User.findOne({ noID: user }, function (err, foundUser) {
+    if (!err) {
+      console.log(foundUser);
+
+      let newScore;
+      if (foundUser.score) {
+        newScore = foundUser.score + points;
+      } else {
+        newScore = points;
+      }
+      console.log("updating score");
+
+      User.findOneAndUpdate({ noID: user }, { $set: { score: newScore } }, function (e) {
+        console.log(e);
+      });
+    } else {
+      console.log(err);
+    }
+  });
+}
+
+function getScore(client, message) {
+  User.findOne({ noID: message.from }, function (err, foundUser) {
+    sendReply(client, message, "Your current score is " + foundUser.score);
+  });
+}
+
+function getRank(cleint, message){
+  User.find({}).sort([['score', -1]]).exec(function(err, docs) {
+    let topTen;
+    for(let i = 0; i <10; i++){
+      topTen = docs[i].name + ": " + docs[i].score + "\n";
+    }
+    sendText(client, message, topTen)
   });
 }
 
@@ -646,14 +700,6 @@ function sendHelp(client, user) {
       }
     }
   });
-}
-
-function gainPoints(user,point){
-  User.findOne({id: user}, function(err, foundUser){
-    if(foundUser.score){
-      
-    }
-  })
 }
 
 String.prototype.shuffle = function () {
