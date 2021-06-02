@@ -678,7 +678,6 @@ function gainPoints(user, points) {
 }
 
 function getScore(client, message) {
-  console.log(message);
   let user;
   if (message.isGroupMsg) {
     user = message.author;
