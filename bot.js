@@ -133,12 +133,9 @@ function start(client) {
           sendReddit(client, message, query);
           break;
         case "quiz":
-          let prob = random(3) + 1;
-          if (prob % 3) {
+        
             quizRandom(client, message);
-          } else {
-            quizCS(client, message);
-          }
+        
 
           break;
         case "score":
