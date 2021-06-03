@@ -135,9 +135,9 @@ function start(client) {
         case "quiz":
           let prob = random(3) + 1;
           if (prob % 3) {
-            quizCS(client, message);
-          } else {
             quizRandom(client, message);
+          } else {
+            quizCS(client, message);
           }
 
           break;
