@@ -133,8 +133,13 @@ function start(client) {
           sendReddit(client, message, query);
           break;
         case "quiz":
-          // quizCS(client, message);
-          quizRandom(client, message)
+          let prob = random(3) + 1;
+          if (prob % 3) {
+            quizCS(client, message);
+          } else {
+            quizRandom(client, message);
+          }
+
           break;
         case "score":
           getScore(client, message);
@@ -624,7 +629,7 @@ function quizCS(client, message) {
         _id: id,
         question: question,
         answers: correctAnswers,
-        difficulty: difficulty
+        difficulty: difficulty,
       });
       ques.save();
       // lookingForAnswer = true;
@@ -676,7 +681,7 @@ function quizRandom(client, message) {
         _id: id,
         question: question,
         answers: correctAnswers,
-        difficulty: difficulty
+        difficulty: difficulty,
       });
       ques.save();
 
@@ -705,26 +710,29 @@ function checkAnswerToQuiz(client, message) {
   Ques.findOne({ _id: id }, function (err, foundQues) {
     if (!err && foundQues) {
       let gain = 0;
-      switch(foundQues.difficulty){
-        case "easy": gain = 10;
-        break;
-        case "medium": gain = 14;
-        break;
-        case "hard": gain = 20;
-        break;
+      switch (foundQues.difficulty) {
+        case "easy":
+          gain = 10;
+          break;
+        case "medium":
+          gain = 14;
+          break;
+        case "hard":
+          gain = 20;
+          break;
         default:
           gain = 10;
       }
       if (foundQues.answers.includes(inputAns)) {
-        sendReply(client, message, "Good Work, you got " + gain +" points");
+        sendReply(client, message, "Good Work, you got " + gain + " points");
         gainPoints(user, gain);
         Ques.deleteOne({ _id: id }, function (err) {
           console.log(err);
         });
         // lookingForAnswer = false;
       } else {
-        sendReply(client, message, "Ow, You lost " + gain/2 + " points, try again!");
-        gainPoints(user, gain/2);
+        sendReply(client, message, "Ow, You lost " + gain / 2 + " points, try again!");
+        gainPoints(user, gain / 2);
         console.log(inputAns + foundQues.answers);
       }
     } else {
