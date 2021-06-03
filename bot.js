@@ -62,7 +62,7 @@ function start(client) {
 
     if (
       message.quotedParticipant === "917017919847@c.us" &&
-      ["a", "b", "c", "d", "e", "f"].includes(_.toLower(message.body))
+      ["a", "b", "c", "d", "e", "f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v"].includes(_.toLower(message.body))
     ) {
       checkAnswerToQuiz(client, message);
     }
@@ -644,20 +644,21 @@ function quizCS(client, message) {
 }
 
 function randomQuesBank(client, message) {
+  let today = new Date();
   axios
     .get("https://trivia.willfry.co.uk/api/questions?limit=1")
-    .then((respone) => {
-      if (respone.status === 200) {
+    .then((response) => {
+      if (response.status === 200) {
         let id = today.getTime() % 1000000000;
         let optionsArray = response.data[0].incorrectAnswers;
-        optionsArray.push(respone.data[0].correctAnswer);
+        optionsArray.push(response.data[0].correctAnswer);
         let difficulty = "medium";
         let correctAnswers = [];
         let options = "";
         optionsArray = _.shuffle(optionsArray);
         optionsArray.forEach((item, index) => {
           let choice = String.fromCharCode(97 + index);
-          if (item === respone.data[0].correctAnswer) {
+          if (item === response.data[0].correctAnswer) {
             correctAnswers.push(choice);
           }
           options += choice + ": " + item + "\n";
@@ -776,7 +777,7 @@ function checkAnswerToQuiz(client, message) {
         // lookingForAnswer = false;
       } else {
         sendReply(client, message, "Ow, You lost " + Math.floor(gain*40/100) + " points, try again!");
-        gainPoints(user, Math.floor(gain*40/100));
+        gainPoints(user, Math.floor(0-gain*40/100));
        
       }
     } else {
