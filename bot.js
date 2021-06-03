@@ -4,6 +4,7 @@ const _ = require("lodash");
 const fs = require("fs");
 const mongoose = require("mongoose");
 const axios = require("axios");
+
 require("dotenv").config();
 
 const truthFile = fs.readFileSync(__dirname + "/data/truths.txt").toString("utf-8");
@@ -30,6 +31,7 @@ const quizSchema = new mongoose.Schema({
   _id: Number,
   question: String,
   answers: Array,
+  difficulty: String,
 });
 
 const Ques = mongoose.model("question", quizSchema);
@@ -131,7 +133,13 @@ function start(client) {
           sendReddit(client, message, query);
           break;
         case "quiz":
-          quiz(client, message);
+          let prob = random(3) + 1;
+          if (prob % 3) {
+            quizRandom(client, message);
+          } else {
+            quizCS(client, message);
+          }
+
           break;
         case "score":
           getScore(client, message);
@@ -592,15 +600,16 @@ function sendGali(client, message) {
   }
 }
 
-function quiz(client, message) {
+function quizCS(client, message) {
   let categories = ["linux", "bash", "docker", "sql"];
   axios
     .get("https://quizapi.io/api/v1/questions", { params: { apiKey: process.env.QUIZAPI, limit: 1 } })
     .then((response) => {
-      console.log(response.data);
+      // console.log(response.data);
       let id = response.data[0].id;
       let question = response.data[0].question;
       let options = "";
+      let difficulty = _.toLower(response.data[0].difficulty);
       Object.entries(response.data[0].answers).forEach(([key, value]) => {
         if (value) {
           options = options + key.split("_")[1] + ": " + value + "\n";
@@ -614,12 +623,12 @@ function quiz(client, message) {
         }
       });
 
-      let sendQuestion = "/" + id + "/\n\n Q: " + question + "\n\n" + options;
-
+      let sendQuestion = "/" + id + "/   _" + difficulty + "_\n\n Q: " + question + "\n\n" + options;
       let ques = new Ques({
         _id: id,
         question: question,
         answers: correctAnswers,
+        difficulty: difficulty,
       });
       ques.save();
       // lookingForAnswer = true;
@@ -628,6 +637,63 @@ function quiz(client, message) {
     .catch((err) => {
       console.log(err);
     });
+}
+
+function quizRandom(client, message) {
+  let today = new Date();
+  let categories = [
+    ["vehicles", 28],
+    ["vdeogames", 15],
+    ["gk", 9],
+    ["math", 19],
+    ["movies", 11],
+    ["cs", 18],
+    ["tech", 30],
+    ["any", null],
+  ];
+  axios
+    .get("https://opentdb.com/api.php?amount=1", {
+      params: { category: categories[Math.floor(Math.random() * categories.length)][1], amount: 1, encode: "base64" },
+    })
+    .then((response) => {
+      // console.log(response.data);
+      let id = today.getTime() % 1000000000;
+      let optionsArray = response.data.results[0].incorrect_answers;
+      let difficulty = _.toLower(b64toString(response.data.results[0].difficulty));
+      optionsArray.push(response.data.results[0].correct_answer);
+      optionsArray = _.shuffle(optionsArray);
+      let correctAnswers = [];
+      let options = "";
+
+      optionsArray.forEach((item, index) => {
+        let choice = String.fromCharCode(97 + index);
+        if (item === response.data.results[0].correct_answer) {
+          correctAnswers.push(choice);
+        }
+        options += choice + ": " + b64toString(item) + "\n";
+      });
+      let question = b64toString(response.data.results[0].question);
+
+      let sendQuestion = "/" + id + "/   _" + difficulty + "_\n\n Q: " + question + "\n\n" + options;
+
+      let ques = new Ques({
+        _id: id,
+        question: question,
+        answers: correctAnswers,
+        difficulty: difficulty,
+      });
+      ques.save();
+
+      sendText(client, message, sendQuestion);
+      console.log(sendQuestion);
+      console.group(correctAnswers);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
+function b64toString(data) {
+  return Buffer.from(data, "base64").toString("ascii");
 }
 
 function checkAnswerToQuiz(client, message) {
@@ -642,16 +708,30 @@ function checkAnswerToQuiz(client, message) {
   let inputAns = _.toLower(message.body);
   Ques.findOne({ _id: id }, function (err, foundQues) {
     if (!err && foundQues) {
+      let gain = 0;
+      switch (foundQues.difficulty) {
+        case "easy":
+          gain = 10;
+          break;
+        case "medium":
+          gain = 14;
+          break;
+        case "hard":
+          gain = 20;
+          break;
+        default:
+          gain = 10;
+      }
       if (foundQues.answers.includes(inputAns)) {
-        sendReply(client, message, "Good Work, you got 10 points");
-        gainPoints(user, 10);
+        sendReply(client, message, "Good Work, you got " + gain + " points");
+        gainPoints(user, gain);
         Ques.deleteOne({ _id: id }, function (err) {
           console.log(err);
         });
         // lookingForAnswer = false;
       } else {
-        sendReply(client, message, "Ow, You lost 3 points, try again!");
-        gainPoints(user, -3);
+        sendReply(client, message, "Ow, You lost " + gain / 2 + " points, try again!");
+        gainPoints(user, gain / 2);
         console.log(inputAns + foundQues.answers);
       }
     } else {
@@ -667,8 +747,8 @@ function gainPoints(user, points) {
 
       let newScore;
 
-        newScore = foundUser.score + points;
-      
+      newScore = foundUser.score + points;
+
       console.log("updating score");
 
       User.findOneAndUpdate({ noID: user }, { $set: { score: newScore } }, function (e) {
@@ -738,16 +818,14 @@ function getCrypto(client, message, attr) {
   axios
     .request(options)
     .then(function (response) {
-      if(response.status === 200){
+      if (response.status === 200) {
         let currentPrice = response.data.market_data.current_price.inr;
         let priceChangePer24h = response.data.market_data.price_change_percentage_24h;
-        let coinInfo = "*"+attr+"*:\n\nCurrent Price: " + currentPrice + " INR\n%Change(24h): " + priceChangePer24h;
-      sendText(client, message, coinInfo)
+        let coinInfo = "*" + attr + "*:\n\nCurrent Price: " + currentPrice + " INR\n%Change(24h): " + priceChangePer24h;
+        sendText(client, message, coinInfo);
+      } else {
+        console.log(response);
       }
-      else{
-        console.log(response)
-      }
-    
     })
     .catch(function (error) {
       console.error(error);
