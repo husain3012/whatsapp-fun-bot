@@ -682,8 +682,6 @@ function quizRandom(client, message) {
       ques.save();
 
       sendText(client, message, sendQuestion);
-      console.log(sendQuestion);
-      console.group(correctAnswers);
     })
     .catch((err) => {
       console.log(err);
@@ -727,9 +725,9 @@ function checkAnswerToQuiz(client, message) {
         });
         // lookingForAnswer = false;
       } else {
-        sendReply(client, message, "Ow, You lost " + gain / 2 + " points, try again!");
-        gainPoints(user, gain / 2);
-        console.log(inputAns + foundQues.answers);
+        sendReply(client, message, "Ow, You lost " + Math.floor(gain*40/100) + " points, try again!");
+        gainPoints(user, Math.floor(gain*40/100));
+       
       }
     } else {
       console.log(err);
@@ -740,7 +738,7 @@ function checkAnswerToQuiz(client, message) {
 function gainPoints(user, points) {
   User.findOne({ noID: user }, function (err, foundUser) {
     if (!err) {
-      console.log(foundUser);
+     
 
       let newScore;
 
@@ -773,11 +771,11 @@ function getRank(client, message) {
   User.find({})
     .sort("-score")
     .exec(function (err, docs) {
-      let topFive = "";
-      for (let i = 0; i < 5; i++) {
-        topFive += docs[i].name + ": " + docs[i].score + "\n";
+      let topTen = "";
+      for (let i = 0; i < 10; i++) {
+        topTen += docs[i].name + ": " + docs[i].score + "\n";
       }
-      sendText(client, message, topFive);
+      sendText(client, message, topTen);
     });
 }
 
