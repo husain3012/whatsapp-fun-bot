@@ -623,8 +623,7 @@ function quizCS(client, message) {
         }
       });
 
-      let sendQuestion = "/" + id + "/\n\n Q: " + question + "\n\n" + options;
-
+      let sendQuestion = "/" + id + "/   _" + difficulty + "_\n\n Q: " + question + "\n\n" + options;
       let ques = new Ques({
         _id: id,
         question: question,
