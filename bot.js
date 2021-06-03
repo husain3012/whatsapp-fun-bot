@@ -56,13 +56,38 @@ venom
     console.log(erro);
   });
 
+  setInterval(shuffleScore, 1000*60*60);
+
 function start(client) {
   client.onMessage((message) => {
     createOrFindUser(message);
 
     if (
       message.quotedParticipant === "917017919847@c.us" &&
-      ["a", "b", "c", "d", "e", "f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v"].includes(_.toLower(message.body))
+      [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+      ].includes(_.toLower(message.body))
     ) {
       checkAnswerToQuiz(client, message);
     }
@@ -133,15 +158,13 @@ function start(client) {
           sendReddit(client, message, query);
           break;
         case "quiz":
-        
-          let rand = Math.ceil(Math.random()*5);
-          if(rand%2===0){
+          let rand = Math.ceil(Math.random() * 5);
+          if (rand % 2 === 0) {
             quizRandom(client, message);
-          }else if(rand===1){
-            quizCS(client, message)
-          }
-          else{
-            randomQuesBank(client, message)
+          } else if (rand === 1) {
+            quizCS(client, message);
+          } else {
+            randomQuesBank(client, message);
           }
 
           break;
@@ -776,9 +799,8 @@ function checkAnswerToQuiz(client, message) {
         });
         // lookingForAnswer = false;
       } else {
-        sendReply(client, message, "Ow, You lost " + Math.floor(gain*40/100) + " points, try again!");
-        gainPoints(user, Math.floor(0-gain*40/100));
-       
+        sendReply(client, message, "Ow, You lost " + Math.floor((gain * 40) / 100) + " points, try again!");
+        gainPoints(user, Math.floor(0 - (gain * 40) / 100));
       }
     } else {
       console.log(err);
@@ -789,8 +811,6 @@ function checkAnswerToQuiz(client, message) {
 function gainPoints(user, points) {
   User.findOne({ noID: user }, function (err, foundUser) {
     if (!err) {
-     
-
       let newScore;
 
       newScore = foundUser.score + points;
@@ -828,6 +848,25 @@ function getRank(client, message) {
       }
       sendText(client, message, topTen);
     });
+}
+
+function shuffleScore() {
+  User.find({})
+    .sort("-score")
+    .exec(function (err, docs) {
+      let topper = docs[0];
+      if (topper.score > 600) {
+        let deduct = topper.score / 10;
+        gainPoints(docs[0].noID, Math.floor(deduct/5- deduct));
+        for (let i = 1; i < 5; i++) {
+          gainPoints(docs[i].noID, Math.floor(deduct / 5));
+        }
+        console.log("Score Re-evaluated");
+      }
+    });
+    // .catch((err) => {
+    //   console.log(err);
+    // });
 }
 
 function sendHelp(client, user) {
