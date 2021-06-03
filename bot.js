@@ -857,9 +857,9 @@ function shuffleScore() {
       let topper = docs[0];
       if (topper.score > 600) {
         let deduct = topper.score / 10;
-        gainPoints(docs[0].noID, Math.floor(deduct/5- deduct));
-        for (let i = 1; i < 5; i++) {
-          gainPoints(docs[i].noID, Math.floor(deduct / 5));
+        gainPoints(docs[0].noID, Math.floor(deduct/10- deduct));
+        for (let i = 3; i < 12; i++) {
+          gainPoints(docs[i].noID, Math.floor(deduct / 10));
         }
         console.log("Score Re-evaluated");
       }
