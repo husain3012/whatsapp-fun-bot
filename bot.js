@@ -134,8 +134,15 @@ function start(client) {
           break;
         case "quiz":
         
+          let rand = Math.ceil(Math.random()*5);
+          if(rand%2===0){
             quizRandom(client, message);
-        
+          }else if(rand===1){
+            quizCS(client, message)
+          }
+          else{
+            randomQuesBank(client, message)
+          }
 
           break;
         case "score":
@@ -630,6 +637,46 @@ function quizCS(client, message) {
       ques.save();
       // lookingForAnswer = true;
       sendText(client, message, sendQuestion);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
+
+function randomQuesBank(client, message) {
+  axios
+    .get("https://trivia.willfry.co.uk/api/questions?limit=1")
+    .then((respone) => {
+      if (respone.status === 200) {
+        let id = today.getTime() % 1000000000;
+        let optionsArray = response.data[0].incorrectAnswers;
+        optionsArray.push(respone.data[0].correctAnswer);
+        let difficulty = "medium";
+        let correctAnswers = [];
+        let options = "";
+        optionsArray = _.shuffle(optionsArray);
+        optionsArray.forEach((item, index) => {
+          let choice = String.fromCharCode(97 + index);
+          if (item === respone.data[0].correctAnswer) {
+            correctAnswers.push(choice);
+          }
+          options += choice + ": " + item + "\n";
+        });
+        let question = response.data[0].question;
+        let sendQuestion = "/" + id + "/   _" + difficulty + "_\n\n Q: " + question + "\n\n" + options;
+
+        let ques = new Ques({
+          _id: id,
+          question: question,
+          answers: correctAnswers,
+          difficulty: difficulty,
+        });
+        ques.save();
+
+        sendText(client, message, sendQuestion);
+        console.log(sendQuestion);
+        console.group(correctAnswers);
+      }
     })
     .catch((err) => {
       console.log(err);
