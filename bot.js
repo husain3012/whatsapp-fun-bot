@@ -646,6 +646,9 @@ function quizRandom(client, message) {
     ["movies", 11],
     ["cs", 18],
     ["tech", 30],
+    ["sports", 21],
+    ["tv", 14],
+    ["anime", 31],
     ["any", null],
   ];
   axios
