@@ -56,7 +56,7 @@ venom
     console.log(erro);
   });
 
-  setInterval(shuffleScore, 1000*60*60);
+setInterval(shuffleScore, 1000 * 60 * 60);
 
 function start(client) {
   client.onMessage((message) => {
@@ -195,6 +195,8 @@ function start(client) {
           console.log("calling gali");
           sendGali(client, message);
 
+          break;
+          case "study": study(client, message)
           break;
         case "help":
           sendHelp(client, message);
@@ -707,6 +709,40 @@ function randomQuesBank(client, message) {
     });
 }
 
+function study(client, message) {
+  let difficulty = "medium";
+  axios.get("http://vast-shelf-88860.herokuapp.com/questions").then((response) => {
+    let id = response.data._id;
+    let optionsArray = Object.values(response.data.options)
+    let correctAnswers=[]
+    correctAnswers.push(response.data.answer);
+    let options = "";
+
+    optionsArray.forEach((item, index) => {
+      let choice = String.fromCharCode(97 + index);
+      options += choice + ": " + item+ "\n";
+    });
+
+    let question = response.data.question;
+
+    let sendQuestion = "/" + id + "/   _" + difficulty + "_\n\n Q: " + question + "\n\n" + options;
+
+    let ques = new Ques({
+      _id: id,
+      question: question,
+      answers: correctAnswers,
+      difficulty: difficulty,
+    });
+    ques.save();
+
+    sendText(client, message, sendQuestion);
+
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+}
+
 function quizRandom(client, message) {
   let today = new Date();
   let categories = [
@@ -857,16 +893,16 @@ function shuffleScore() {
       let topper = docs[0];
       if (topper.score > 600) {
         let deduct = topper.score / 10;
-        gainPoints(docs[0].noID, Math.floor(deduct/10- deduct));
+        gainPoints(docs[0].noID, Math.floor(deduct / 10 - deduct));
         for (let i = 3; i < 12; i++) {
           gainPoints(docs[i].noID, Math.floor(deduct / 10));
         }
         console.log("Score Re-evaluated");
       }
     });
-    // .catch((err) => {
-    //   console.log(err);
-    // });
+  // .catch((err) => {
+  //   console.log(err);
+  // });
 }
 
 function sendHelp(client, user) {
